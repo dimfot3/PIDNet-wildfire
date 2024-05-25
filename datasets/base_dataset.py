@@ -34,6 +34,11 @@ class BaseDataset(data.Dataset):
         return len(self.files)
 
     def input_transform(self, image, city=True):
+        """
+        Read the image and do the following steps:
+            1) if image in city then reverses the RGB channels making f32
+            2) normalize the images by scaling to 0,1 and removing mean and divide with std
+        """
         if city:
             image = image.astype(np.float32)[:, :, ::-1]
         else:
@@ -44,9 +49,16 @@ class BaseDataset(data.Dataset):
         return image
 
     def label_transform(self, label):
+        """
+        It transform the labels in numpy array of int8
+        """
         return np.array(label).astype(np.uint8)
 
     def pad_image(self, image, h, w, size, padvalue):
+        """
+        This pads the dimension of the image that is less than
+        a predifined size filling with a padvalue.
+        """
         pad_image = image.copy()
         pad_h = max(size[0] - h, 0)
         pad_w = max(size[1] - w, 0)
@@ -54,10 +66,12 @@ class BaseDataset(data.Dataset):
             pad_image = cv2.copyMakeBorder(image, 0, pad_h, 0,
                                            pad_w, cv2.BORDER_CONSTANT,
                                            value=padvalue)
-
         return pad_image
 
     def rand_crop(self, image, label, edge):
+        """
+        Random crop images in dimension where there are less than self.crop_size
+        """
         h, w = image.shape[:-1]
         image = self.pad_image(image, h, w, self.crop_size,
                                (0.0, 0.0, 0.0))
@@ -77,6 +91,9 @@ class BaseDataset(data.Dataset):
 
     def multi_scale_aug(self, image, label=None, edge=None,
                         rand_scale=1, rand_crop=True):
+        """
+        Randomly changes the scale of an image
+        """
         long_size = np.int(self.base_size * rand_scale + 0.5)
         h, w = image.shape[:2]
         if h > w:
@@ -105,7 +122,10 @@ class BaseDataset(data.Dataset):
 
     def gen_sample(self, image, label,
                    multi_scale=True, is_flip=True, edge_pad=True, edge_size=4, city=True):
-        
+        """
+        generate a training sample by applying augmentation, then generates edge label with cv2 and then 
+        normalizes the images and the label and return image, label and edges
+        """
         edge = cv2.Canny(label, 0.1, 0.2)
         kernel = np.ones((edge_size, edge_size), np.uint8)
         if edge_pad:
@@ -134,6 +154,9 @@ class BaseDataset(data.Dataset):
 
 
     def inference(self, config, model, image):
+        """
+        Pass the image through the model and return the expodential results
+        """
         size = image.size()
         pred = model(image)
 
