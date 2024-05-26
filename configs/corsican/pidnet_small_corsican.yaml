@@ -14,7 +14,7 @@ DATASET:
   TEST_SET: 'list/val.txt'
   TRAIN_SET: 'list/train.txt'
   NUM_CLASSES: 2
-  NIR: 'fusion'			# None, single, fusion
+  NIR: 'fusion'
 MODEL:
   NAME: pidnet_s
   NUM_OUTPUTS: 2

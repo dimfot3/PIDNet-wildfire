@@ -19,10 +19,13 @@ class Corsican(BaseDataset):
                  base_size=1024, 
                  crop_size=(720, 960),
                  scale_factor=16,
-                 mean=[0.21562975],
-                 std=[0.16085693],
-                 bd_dilate_size=4, nir='None'):
+                 mean=[0.21562974739056145, 0.27942731011997907, 0.402625553988713, 0.1878679056174089],
+                 std=[0.1608569349670365, 0.1885546372797602, 0.28214404172689506, 0.17329260037921992],
+                 bd_dilate_size=4, nir='rgb'):
 
+        indices = {'rgb': [0, 1, 2], 'nir': [3], 'fusion': [0, 1, 2, 3]}       # based on nir mode
+        mean = [mean[i] for i in indices[nir]]
+        std = [std[i] for i in indices[nir]]
         super(Corsican, self).__init__(ignore_label, base_size,
                 crop_size, scale_factor, mean, std)
 
@@ -46,6 +49,7 @@ class Corsican(BaseDataset):
         self.bd_dilate_size = bd_dilate_size
 
         self.nir = nir
+
     
     def read_files(self):
         files = []
@@ -79,15 +83,15 @@ class Corsican(BaseDataset):
     def __getitem__(self, index):
         item = self.files[index]
         name = item["name"]
-        if self.nir=='None':
+        if self.nir=='rgb':
             image = np.array(Image.open(os.path.join(self.root,'images',item["img"])).convert('RGB'))
-        elif self.nir=='single':
+        elif self.nir=='nir':
             image = np.array(Image.open(os.path.join(self.root,'images',item["nir"])).convert('L'))
             image = image.reshape(image.shape[0], image.shape[1], 1)
         elif self.nir=='fusion':
-            image1 = np.array(Image.open(os.path.join(self.root,'images',item["nir"])).convert('L'))
-            image1 = image1.reshape(image1.shape[0], image1.shape[1], 1)
-            image = np.array(Image.open(os.path.join(self.root,'images',item["img"])).convert('RGB'))
+            image = np.array(Image.open(os.path.join(self.root,'images',item["nir"])).convert('L'))
+            image = image.reshape(image.shape[0], image.shape[1], 1)
+            image1 = np.array(Image.open(os.path.join(self.root,'images',item["img"])).convert('RGB'))
             image = np.append(image, image1, 2)
         size = image.shape
         color_map = Image.open(os.path.join(self.root,'images',item["label"])).convert('RGB')

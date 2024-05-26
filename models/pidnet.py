@@ -182,7 +182,7 @@ class PIDNet(nn.Module):
             return x_      
 
 def get_seg_model(cfg, imgnet_pretrained):
-    channels = {'None': 0, 'single': 1, 'fusion': 4}
+    channels = {'rgb': 3, 'nir': 1, 'fusion': 4}
     if 's' in cfg.MODEL.NAME:
         model = PIDNet(m=2, n=3, num_classes=cfg.DATASET.NUM_CLASSES, planes=32, ppm_planes=96, head_planes=128, augment=True, channels=channels[cfg.DATASET.NIR])
     elif 'm' in cfg.MODEL.NAME:
