@@ -19,9 +19,9 @@ class Corsican(BaseDataset):
                  base_size=1024, 
                  crop_size=(720, 960),
                  scale_factor=16,
-                 mean=[0.21562975, 0.27942731, 0.40262555],
-                 std=[0.16085693, 0.18855464, 0.28214404],
-                 bd_dilate_size=4):
+                 mean=[0.21562975],
+                 std=[0.16085693],
+                 bd_dilate_size=4, nir='single'):
 
         super(Corsican, self).__init__(ignore_label, base_size,
                 crop_size, scale_factor, mean, std)
@@ -44,15 +44,18 @@ class Corsican(BaseDataset):
         self.class_weights = None
         
         self.bd_dilate_size = bd_dilate_size
+
+        self.nir = nir
     
     def read_files(self):
         files = []
 
         for item in self.img_list:
-            image_path, label_path = item.replace('XXX', 'rgb'), item.replace('XXX', 'gt')
+            image_path, nir_path, label_path = item.replace('XXX', 'rgb'), item.replace('XXX', 'nir'),item.replace('XXX', 'gt')
             name = os.path.splitext(os.path.basename(label_path))[0]
             files.append({
                 "img": image_path,
+                "nir": nir_path,
                 "label": label_path,
                 "name": name.replace('_gt_', '_')
             })
@@ -76,8 +79,11 @@ class Corsican(BaseDataset):
     def __getitem__(self, index):
         item = self.files[index]
         name = item["name"]
-        image = Image.open(os.path.join(self.root,'images',item["img"])).convert('RGB')
-        image = np.array(image)
+        if self.nir!='single':
+            image = np.array(Image.open(os.path.join(self.root,'images',item["img"])).convert('RGB'))
+        elif self.nir=='single':
+            image = np.array(Image.open(os.path.join(self.root,'images',item["nir"])).convert('L'))
+            image = image.reshape(image.shape[0], image.shape[1], 1)
         size = image.shape
 
         color_map = Image.open(os.path.join(self.root,'images',item["label"])).convert('RGB')
@@ -111,7 +117,6 @@ if __name__ == '__main__':
     std = np.array(dataset.std)
     for i in np.random.choice(len(dataset), 3):
         img, label, edge, size, _ = dataset[i]
-        print(size)
         f, ax = plt.subplots(1, 3)
         img = img.transpose((1, 2, 0))
         img = (((img * std) + mean) * 255).astype('int')

@@ -46,6 +46,7 @@ _C.DATASET = CN()
 _C.DATASET.ROOT = 'data/'
 _C.DATASET.DATASET = 'cityscapes'
 _C.DATASET.NUM_CLASSES = 19
+_C.DATASET.NIR = 'None'
 _C.DATASET.TRAIN_SET = 'list/cityscapes/train.lst'
 _C.DATASET.EXTRA_TRAIN_SET = ''
 _C.DATASET.TEST_SET = 'list/cityscapes/val.lst'

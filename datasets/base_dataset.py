@@ -86,7 +86,8 @@ class BaseDataset(data.Dataset):
         image = image[y:y+self.crop_size[0], x:x+self.crop_size[1]]
         label = label[y:y+self.crop_size[0], x:x+self.crop_size[1]]
         edge = edge[y:y+self.crop_size[0], x:x+self.crop_size[1]]
-
+        if(len(image.shape) == 2):
+            image = image.reshape(image.shape[0], image.shape[1], 1)
         return image, label, edge
 
     def multi_scale_aug(self, image, label=None, edge=None,
@@ -105,6 +106,8 @@ class BaseDataset(data.Dataset):
 
         image = cv2.resize(image, (new_w, new_h),
                            interpolation=cv2.INTER_LINEAR)
+        if(len(image.shape) == 2):
+            image = image.reshape(image.shape[0], image.shape[1], 1)
         if label is not None:
             label = cv2.resize(label, (new_w, new_h),
                                interpolation=cv2.INTER_NEAREST)
@@ -113,10 +116,8 @@ class BaseDataset(data.Dataset):
                                    interpolation=cv2.INTER_NEAREST)
         else:
             return image
-
         if rand_crop:
             image, label, edge = self.rand_crop(image, label, edge)
-
         return image, label, edge
 
 
@@ -140,8 +141,6 @@ class BaseDataset(data.Dataset):
 
         image = self.input_transform(image, city=city)
         label = self.label_transform(label)
-        
-
         image = image.transpose((2, 0, 1))
 
         if is_flip:
