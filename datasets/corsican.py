@@ -21,7 +21,7 @@ class Corsican(BaseDataset):
                  scale_factor=16,
                  mean=[0.21562975],
                  std=[0.16085693],
-                 bd_dilate_size=4, nir='single'):
+                 bd_dilate_size=4, nir='None'):
 
         super(Corsican, self).__init__(ignore_label, base_size,
                 crop_size, scale_factor, mean, std)
@@ -51,7 +51,7 @@ class Corsican(BaseDataset):
         files = []
 
         for item in self.img_list:
-            image_path, nir_path, label_path = item.replace('XXX', 'rgb'), item.replace('XXX', 'nir'),item.replace('XXX', 'gt')
+            image_path, nir_path, label_path = item.replace('XXX', 'rgb'), item.replace('XXX', 'nir'), item.replace('XXX', 'gt')
             name = os.path.splitext(os.path.basename(label_path))[0]
             files.append({
                 "img": image_path,
@@ -79,13 +79,17 @@ class Corsican(BaseDataset):
     def __getitem__(self, index):
         item = self.files[index]
         name = item["name"]
-        if self.nir!='single':
+        if self.nir=='None':
             image = np.array(Image.open(os.path.join(self.root,'images',item["img"])).convert('RGB'))
         elif self.nir=='single':
             image = np.array(Image.open(os.path.join(self.root,'images',item["nir"])).convert('L'))
             image = image.reshape(image.shape[0], image.shape[1], 1)
+        elif self.nir=='fusion':
+            image1 = np.array(Image.open(os.path.join(self.root,'images',item["nir"])).convert('L'))
+            image1 = image1.reshape(image1.shape[0], image1.shape[1], 1)
+            image = np.array(Image.open(os.path.join(self.root,'images',item["img"])).convert('RGB'))
+            image = np.append(image, image1, 2)
         size = image.shape
-
         color_map = Image.open(os.path.join(self.root,'images',item["label"])).convert('RGB')
         color_map = np.array(color_map)
         label = self.color2label(color_map)
