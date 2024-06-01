@@ -143,19 +143,25 @@ def testval(config, test_dataset, testloader, model,
                     pred, size[-2:],
                     mode='bilinear', align_corners=config.MODEL.ALIGN_CORNERS
                 )
-            
-            confusion_matrix += get_confusion_matrix(
+            temp_comf = get_confusion_matrix(
                 label,
                 pred,
                 size,
                 config.DATASET.NUM_CLASSES,
                 config.TRAIN.IGNORE_LABEL)
+            
+            pos = temp_comf.sum(1)
+            res = temp_comf.sum(0)
+            tp = np.diag(temp_comf)
+            #print(name, tp[1]/res[1])
+            confusion_matrix += temp_comf
 
             if sv_pred:
                 sv_path = os.path.join(sv_dir, 'val_results')
                 if not os.path.exists(sv_path):
                     os.mkdir(sv_path)
-                test_dataset.save_pred(pred, sv_path, name)
+                
+                test_dataset.save_pred(image, label, pred, name, sv_path)
 
             if index % 100 == 0:
                 logging.info('processing: %d images' % index)
@@ -165,7 +171,6 @@ def testval(config, test_dataset, testloader, model,
                 IoU_array = (tp / np.maximum(1.0, pos + res - tp))
                 mean_IoU = IoU_array.mean()
                 logging.info('mIoU: %.4f' % (mean_IoU))
-
     pos = confusion_matrix.sum(1)
     res = confusion_matrix.sum(0)
     tp = np.diag(confusion_matrix)

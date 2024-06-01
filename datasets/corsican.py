@@ -24,10 +24,10 @@ class Corsican(BaseDataset):
                  bd_dilate_size=4, nir='rgb'):
 
         indices = {'rgb': [0, 1, 2], 'nir': [3], 'fusion': [0, 1, 2, 3]}       # based on nir mode
-        mean = [mean[i] for i in indices[nir]]
-        std = [std[i] for i in indices[nir]]
+        self.mean = [mean[i] for i in indices[nir]]
+        self.std = [std[i] for i in indices[nir]]
         super(Corsican, self).__init__(ignore_label, base_size,
-                crop_size, scale_factor, mean, std)
+                crop_size, scale_factor, self.mean, self.std)
 
         self.root = root
         self.list_path = list_path
@@ -108,19 +108,32 @@ class Corsican(BaseDataset):
         pred = self.inference(config, model, image)
         return pred
 
-    def save_pred(self, preds, sv_path, name):
+    def save_pred(self, images, labels, preds, name, path):
         if(len(preds.shape)>3):
             preds = np.asarray(np.argmax(preds.cpu(), axis=1), dtype=np.uint8)
         else:
             preds = np.asarray(preds.cpu(), dtype=np.uint8)
+        labels = np.asarray(labels.cpu(), dtype=np.uint8)
+        images = np.asarray(images.cpu(), dtype=np.float32).transpose(0, 2, 3, 1)
         for i in range(preds.shape[0]):
             pred = self.label2color(preds[i])
-            save_img = Image.fromarray(pred)
-            save_img.save(os.path.join(sv_path, name[i]+'.png'))
+            label = self.label2color(labels[i])
+            image = (((images[i] * self.std) + self.mean) * 255).astype('int')
+            f, ax = plt.subplots(1, 3, figsize=(10,7))
+            titles = ['Image', 'Ground Truth', 'Prediction']
+            pics = [image, label, pred]
+            for j in range(3):
+                ax[j].imshow(pics[j])
+                ax[j].set_title(titles[j])
+            plt.tight_layout()
+            plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.05, wspace=0.3, hspace=0.3)
+            plt.savefig(f'{path}/{name[i]}.png', dpi=300)
+            plt.clf()
+            plt.close()
 
         
 if __name__ == '__main__':
-    dataset = Corsican('../data/CorsicanDB/', 'list/train.txt')
+    dataset = Corsican('./data/CorsicanDB/', 'list/train.txt')
     mean = np.array(dataset.mean)
     std = np.array(dataset.std)
     for i in np.random.choice(len(dataset), 3):
