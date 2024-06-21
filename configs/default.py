@@ -14,6 +14,7 @@ _C = CN()
 _C.OUTPUT_DIR = ''
 _C.LOG_DIR = ''
 _C.GPUS = (0,)
+_C.DEVICE = 'cuda'
 _C.WORKERS = 4
 _C.PRINT_FREQ = 20
 _C.AUTO_RESUME = False

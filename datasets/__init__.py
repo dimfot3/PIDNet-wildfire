@@ -9,3 +9,5 @@ from __future__ import print_function
 from .cityscapes import Cityscapes as cityscapes
 from .camvid import CamVid as camvid
 from .corsican import Corsican as corsican
+from .smokefire import SmokeFire as smokefire
+

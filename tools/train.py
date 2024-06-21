@@ -79,7 +79,8 @@ def main():
     imgnet = 'imagenet' in config.MODEL.PRETRAINED
     model = models.pidnet.get_seg_model(config, imgnet_pretrained=imgnet)
  
-    batch_size = config.TRAIN.BATCH_SIZE_PER_GPU * len(gpus)
+    batch_size = config.TRAIN.BATCH_SIZE_PER_GPU * len(gpus) if len(gpus) > 0 else config.TRAIN.BATCH_SIZE_PER_GPU
+    print(batch_size)
     # prepare data
     crop_size = (config.TRAIN.IMAGE_SIZE[1], config.TRAIN.IMAGE_SIZE[0])
     train_dataset = eval('datasets.'+config.DATASET.DATASET)(
@@ -117,7 +118,7 @@ def main():
 
     testloader = torch.utils.data.DataLoader(
         test_dataset,
-        batch_size=config.TEST.BATCH_SIZE_PER_GPU * len(gpus),
+        batch_size=config.TEST.BATCH_SIZE_PER_GPU * len(gpus) if len(gpus) > 0 else config.TEST.BATCH_SIZE_PER_GPU,
         shuffle=False,
         num_workers=config.WORKERS,
         pin_memory=False)
@@ -135,7 +136,8 @@ def main():
     bd_criterion = BondaryLoss()
     
     model = FullModel(model, sem_criterion, bd_criterion)
-    model = nn.DataParallel(model, device_ids=gpus).cuda()
+    if(len(gpus) > 0):
+        model = nn.DataParallel(model, device_ids=gpus).cuda()
 
     # optimizer
     if config.TRAIN.OPTIMIZER == 'sgd':
@@ -151,7 +153,7 @@ def main():
     else:
         raise ValueError('Only Support SGD optimizer')
 
-    epoch_iters = int(train_dataset.__len__() / config.TRAIN.BATCH_SIZE_PER_GPU / len(gpus))
+    epoch_iters = int(train_dataset.__len__() / config.TRAIN.BATCH_SIZE_PER_GPU / max([len(gpus), 1]))
         
     best_mIoU = 0
     last_epoch = 0
@@ -163,8 +165,10 @@ def main():
             best_mIoU = checkpoint['best_mIoU']
             last_epoch = checkpoint['epoch']
             dct = checkpoint['state_dict']
-            
-            model.module.model.load_state_dict({k.replace('model.', ''): v for k, v in dct.items() if k.startswith('model.')})
+            if(config.DEVICE != 'cpu'):
+                model.module.model.load_state_dict({k.replace('model.', ''): v for k, v in dct.items() if k.startswith('model.')})
+            else:
+                model.model.load_state_dict({k.replace('model.', ''): v for k, v in dct.items() if k.startswith('model.')})
             optimizer.load_state_dict(checkpoint['optimizer'])
             logger.info("=> loaded checkpoint (epoch {})".format(checkpoint['epoch']))
 
@@ -194,12 +198,12 @@ def main():
         torch.save({
             'epoch': epoch+1,
             'best_mIoU': best_mIoU,
-            'state_dict': model.module.state_dict(),
+            'state_dict': model.module.state_dict() if(config.DEVICE != 'cpu') else model.state_dict(),
             'optimizer': optimizer.state_dict(),
         }, os.path.join(final_output_dir,'checkpoint.pth.tar'))
         if mean_IoU > best_mIoU:
             best_mIoU = mean_IoU
-            torch.save(model.module.state_dict(),
+            torch.save(model.module.state_dict() if(config.DEVICE != 'cpu') else model.state_dict(),
                     os.path.join(final_output_dir, 'best.pt'))
         msg = 'Loss: {:.3f}, MeanIU: {: 4.4f}, Best_mIoU: {: 4.4f}'.format(
                     valid_loss, mean_IoU, best_mIoU)
@@ -208,7 +212,7 @@ def main():
 
 
 
-    torch.save(model.module.state_dict(),
+    torch.save(model.module.state_dict() if(config.DEVICE != 'cpu') else model.state_dict(),
             os.path.join(final_output_dir, 'final_state.pt'))
 
     writer_dict['writer'].close()

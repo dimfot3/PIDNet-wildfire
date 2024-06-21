@@ -35,9 +35,9 @@ def train(config, epoch, num_epoch, epoch_iters, base_lr,
 
     for i_iter, batch in enumerate(trainloader, 0):
         images, labels, bd_gts, _, _ = batch
-        images = images.cuda()
-        labels = labels.long().cuda()
-        bd_gts = bd_gts.float().cuda()
+        images = images.to(device=config.DEVICE)
+        labels = labels.long().to(device=config.DEVICE)
+        bd_gts = bd_gts.float().to(device=config.DEVICE)
         
 
         losses, _, acc, loss_list = model(images, labels, bd_gts)
@@ -84,9 +84,9 @@ def validate(config, testloader, model, writer_dict):
         for idx, batch in enumerate(testloader):
             image, label, bd_gts, _, _ = batch
             size = label.size()
-            image = image.cuda()
-            label = label.long().cuda()
-            bd_gts = bd_gts.float().cuda()
+            image = image.to(device=config.DEVICE)
+            label = label.long().to(device=config.DEVICE)
+            bd_gts = bd_gts.float().to(device=config.DEVICE)
 
             losses, pred, _, _ = model(image, label, bd_gts)
             if not isinstance(pred, (list, tuple)):
@@ -136,7 +136,7 @@ def testval(config, test_dataset, testloader, model,
         for index, batch in enumerate(tqdm(testloader)):
             image, label, _, _, name = batch
             size = label.size()
-            pred = test_dataset.single_scale_inference(config, model, image.cuda())
+            pred = test_dataset.single_scale_inference(config, model, image.to(device=config.device))
 
             if pred.size()[-2] != size[-2] or pred.size()[-1] != size[-1]:
                 pred = F.interpolate(
@@ -192,7 +192,7 @@ def test(config, test_dataset, testloader, model,
             pred = test_dataset.single_scale_inference(
                 config,
                 model,
-                image.cuda())
+                image.to(device=config.DEVICE))
 
             if pred.size()[-2] != size[0] or pred.size()[-1] != size[1]:
                 pred = F.interpolate(

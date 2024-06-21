@@ -136,7 +136,7 @@ class BaseDataset(data.Dataset):
         return contrast_image
 
     def gen_sample(self, image, label,
-                   multi_scale=True, is_flip=True, edge_pad=True, edge_size=4, city=True):
+                   multi_scale=True, is_flip=True, edge_pad=True, edge_size=4, city=True, brightness=True, contrast=True):
         """
         generate a training sample by applying augmentation, then generates edge label with cv2 and then 
         normalizes the images and the label and return image, label and edges
@@ -151,10 +151,11 @@ class BaseDataset(data.Dataset):
         if multi_scale:
             rand_scale = 0.5 + random.randint(0, self.scale_factor) / 10.0
             image, label, edge = self.multi_scale_aug(image, label, edge,
-                                                rand_scale=rand_scale)
-        if is_flip:
-            image = self.adjust_contrast(image)
+                                                rand_scale=rand_scale)            
+        if brightness:
             image = self.change_brightness(image)
+        if contrast:
+            image = self.adjust_contrast(image)
         image = self.input_transform(image, city=city)
         label = self.label_transform(label)
         image = image.transpose((2, 0, 1))
