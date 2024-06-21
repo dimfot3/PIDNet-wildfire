@@ -120,6 +120,20 @@ class BaseDataset(data.Dataset):
             image, label, edge = self.rand_crop(image, label, edge)
         return image, label, edge
 
+    def change_brightness(self, image):
+        brightness_factor = np.random.rand(1) * 3
+        float_image = image.astype(np.float32)
+        brightened_image = float_image * brightness_factor
+        brightened_image = np.clip(brightened_image, 0, 255).astype(np.uint8)
+        return brightened_image
+
+    def adjust_contrast(self, image):
+    
+        float_image = image.astype(np.float32)
+        mean = np.mean(float_image, axis=(0, 1), keepdims=True)
+        contrast_image = (float_image - mean) * (np.random.random((1, )) * 1.5 + 0.5) + mean
+        contrast_image = np.clip(contrast_image, 0, 255).astype(np.uint8)
+        return contrast_image
 
     def gen_sample(self, image, label,
                    multi_scale=True, is_flip=True, edge_pad=True, edge_size=4, city=True):
@@ -138,7 +152,9 @@ class BaseDataset(data.Dataset):
             rand_scale = 0.5 + random.randint(0, self.scale_factor) / 10.0
             image, label, edge = self.multi_scale_aug(image, label, edge,
                                                 rand_scale=rand_scale)
-
+        if is_flip:
+            image = self.adjust_contrast(image)
+            image = self.change_brightness(image)
         image = self.input_transform(image, city=city)
         label = self.label_transform(label)
         image = image.transpose((2, 0, 1))
