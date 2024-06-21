@@ -91,7 +91,8 @@ def main():
                         ignore_label=config.TRAIN.IGNORE_LABEL,
                         base_size=config.TRAIN.BASE_SIZE,
                         crop_size=crop_size,
-                        scale_factor=config.TRAIN.SCALE_FACTOR)
+                        scale_factor=config.TRAIN.SCALE_FACTOR,
+                        nir=config.DATASET.NIR)
 
     trainloader = torch.utils.data.DataLoader(
         train_dataset,
@@ -111,7 +112,8 @@ def main():
                         flip=False,
                         ignore_label=config.TRAIN.IGNORE_LABEL,
                         base_size=config.TEST.BASE_SIZE,
-                        crop_size=test_size)
+                        crop_size=test_size,
+                        nir=config.DATASET.NIR)
 
     testloader = torch.utils.data.DataLoader(
         test_dataset,
@@ -181,7 +183,7 @@ def main():
                   epoch_iters, config.TRAIN.LR, num_iters,
                   trainloader, optimizer, model, writer_dict)
 
-        if flag_rm == 1 or (epoch % 5 == 0 and epoch < real_end - 100) or (epoch >= real_end - 100):
+        if (flag_rm == 1) or (epoch % 5 == 0):
             valid_loss, mean_IoU, IoU_array = validate(config, 
                         testloader, model, writer_dict)
         if flag_rm == 1:

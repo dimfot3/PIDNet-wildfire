@@ -29,7 +29,7 @@ def parse_args():
     
     parser.add_argument('--cfg',
                         help='experiment configure file name',
-                        default="experiments/cityscapes/pidnet_small_cityscapes.yaml",
+                        default="./configs/corsican/pidnet_small_corsican.yaml",
                         type=str)
     parser.add_argument('opts',
                         help="Modify config options using the command-line",
@@ -89,7 +89,8 @@ def main():
                         flip=False,
                         ignore_label=config.TRAIN.IGNORE_LABEL,
                         base_size=config.TEST.BASE_SIZE,
-                        crop_size=test_size)
+                        crop_size=test_size,
+                        nir=config.DATASET.NIR)
 
     testloader = torch.utils.data.DataLoader(
         test_dataset,
@@ -101,24 +102,17 @@ def main():
     start = timeit.default_timer()
     
     
-    if ('test' in config.DATASET.TEST_SET) and ('city' in config.DATASET.DATASET):
-        test(config, 
-             test_dataset, 
-             testloader, 
-             model,
-             sv_dir=final_output_dir)
-        
-    else:
-        mean_IoU, IoU_array, pixel_acc, mean_acc = testval(config, 
-                                                           test_dataset, 
-                                                           testloader, 
-                                                           model)
     
-        msg = 'MeanIU: {: 4.4f}, Pixel_Acc: {: 4.4f}, \
-            Mean_Acc: {: 4.4f}, Class IoU: '.format(mean_IoU, 
-            pixel_acc, mean_acc)
-        logging.info(msg)
-        logging.info(IoU_array)
+    mean_IoU, IoU_array, pixel_acc, mean_acc = testval(config, 
+                                                        test_dataset, 
+                                                        testloader, 
+                                                        model, sv_pred=True)
+
+    msg = 'MeanIU: {: 4.4f}, Pixel_Acc: {: 4.4f}, \
+        Mean_Acc: {: 4.4f}, Class IoU: '.format(mean_IoU, 
+        pixel_acc, mean_acc)
+    logging.info(msg)
+    logging.info(IoU_array)
 
 
     end = timeit.default_timer()
