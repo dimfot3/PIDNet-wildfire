@@ -65,7 +65,7 @@ def main():
    
     logger.info('=> loading model from {}'.format(model_state_file))
         
-    pretrained_dict = torch.load(model_state_file)
+    pretrained_dict = torch.load(model_state_file, map_location=torch.device(config.DEVICE))
     if 'state_dict' in pretrained_dict:
         pretrained_dict = pretrained_dict['state_dict']
     model_dict = model.state_dict()
@@ -77,7 +77,7 @@ def main():
     model_dict.update(pretrained_dict)
     model.load_state_dict(model_dict)
 
-    model = model.cuda()
+    model = model.to(config.DEVICE)
 
     # prepare data
     test_size = (config.TEST.IMAGE_SIZE[1], config.TEST.IMAGE_SIZE[0])
@@ -116,7 +116,7 @@ def main():
 
 
     end = timeit.default_timer()
-    logger.info('Mins: %d' % np.int((end-start)/60))
+    logger.info('Mins: %d' % int((end-start)/60))
     logger.info('Done')
 
 

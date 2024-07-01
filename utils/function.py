@@ -136,7 +136,7 @@ def testval(config, test_dataset, testloader, model,
         for index, batch in enumerate(tqdm(testloader)):
             image, label, _, _, name = batch
             size = label.size()
-            pred = test_dataset.single_scale_inference(config, model, image.to(device=config.device))
+            pred = test_dataset.single_scale_inference(config, model, image.to(device=config.DEVICE))
 
             if pred.size()[-2] != size[-2] or pred.size()[-1] != size[-1]:
                 pred = F.interpolate(
